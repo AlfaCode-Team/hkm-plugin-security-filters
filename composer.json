@@ -1,0 +1,15 @@
+{
+    "name": "alfacode-team/hkm-plugin-security-filters",
+    "description": "HKM Kernel plugin providing 'http.security_filters'.",
+    "type": "library",
+    "license": "MIT",
+    "keywords": ["hkm-kernel", "plugin", "php", "http.security_filters"],
+    "require": {
+        "php": ">=8.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "Plugins\\SecurityFilters\\": ""
+        }
+    }
+}
