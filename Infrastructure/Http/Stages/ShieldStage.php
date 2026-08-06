@@ -49,6 +49,32 @@ final class ShieldStage implements HttpStageContract
     /**
      * @return array{0:string,1:string}|null  ['role'|'perm', value]
      */
+    /**
+     * Does $path fall under the guarded $prefix?
+     *
+     * Plain str_starts_with was an AUTHORIZATION BYPASS in both directions:
+     *
+     *   - No segment boundary: a rule on "/admin" also claimed
+     *     "/administrators-public", so an unrelated public page inherited an
+     *     admin requirement — and a rule intended for one area silently changed
+     *     which requests it governed as routes were added.
+     *   - Case-sensitive: "/Admin/users" matched no "/admin" rule at all and
+     *     sailed through unguarded.
+     *
+     * Matching is now case-insensitive and boundary-aware: the path must equal
+     * the prefix or continue with '/'.
+     */
+    private static function pathMatchesPrefix(string $path, string $prefix): bool
+    {
+        $prefix = rtrim(strtolower($prefix), '/');
+
+        if ($prefix === '') {
+            return true; // a bare "/" guards everything
+        }
+
+        return $path === $prefix || str_starts_with($path, $prefix . '/');
+    }
+
     private function matchRule(string $path): ?array
     {
         $raw = (string) (env('SHIELD_RULES') ?: '');
@@ -58,13 +84,14 @@ final class ShieldStage implements HttpStageContract
 
         $best = null;
         $bestLen = -1;
+        $path = strtolower($path);
         foreach (explode(';', $raw) as $entry) {
             $entry = trim($entry);
             if ($entry === '' || !str_contains($entry, '=')) {
                 continue;
             }
             [$prefix, $req] = array_map('trim', explode('=', $entry, 2));
-            if ($prefix === '' || !str_starts_with($path, $prefix)) {
+            if ($prefix === '' || !self::pathMatchesPrefix($path, $prefix)) {
                 continue;
             }
             if (strlen($prefix) <= $bestLen) {

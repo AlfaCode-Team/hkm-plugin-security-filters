@@ -112,7 +112,17 @@ final class ApiRateLimitStage implements HttpStageContract
         if ($identity !== null && !$identity->isGuest()) {
             return 'user_' . $identity->userId;
         }
-        $ip = $request->header('X-Forwarded-For') ?? $request->attribute('client_ip');
-        return 'ip_' . ($ip ?: 'unknown');
+        // Use ONLY the resolved client_ip. This used to prefer the raw
+        // X-Forwarded-For header, which the client sends and can therefore
+        // change at will — rotating it gave every request a fresh bucket and
+        // defeated every per-IP throttle in the application, including the
+        // login and password-reset limits.
+        //
+        // client_ip is set upstream from the connection address, honouring
+        // whatever trusted-proxy configuration the deployment established. That
+        // is the only value here that an attacker cannot choose.
+        $ip = $request->attribute('client_ip');
+
+        return 'ip_' . (is_string($ip) && $ip !== '' ? $ip : 'unknown');
     }
 }
