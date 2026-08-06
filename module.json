@@ -1,6 +1,7 @@
 {
     "name": "security-filters",
     "version": "1.0.0",
+    "kernel": "^1.0",
     "solves": "http.security_filters",
     "type": "module",
 
