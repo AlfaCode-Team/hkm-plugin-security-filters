@@ -15,6 +15,7 @@ use Plugins\SecurityFilters\Infrastructure\Http\Stages\HmacSignedStage;
 use Plugins\SecurityFilters\Infrastructure\Http\Stages\RequireAuthStage;
 use Plugins\SecurityFilters\Infrastructure\Http\Stages\SecurityHeadersStage;
 use Plugins\SecurityFilters\Infrastructure\Http\Stages\ShieldStage;
+use Plugins\SecurityFilters\Infrastructure\Http\Stages\SignedUrlStage;
 
 /**
  * SecurityFilters plugin — the 0.3 HTTP filters rebuilt as GDA pipeline stages.
@@ -68,5 +69,8 @@ final class Provider implements ModuleContract
         $http->filter('throttle', ApiRateLimitStage::class);
         $http->filter('hmac',     HmacSignedStage::class);
         $http->filter('shield',   ShieldStage::class);
+        // Enforces UrlGenerator::signedRoute() links — see SignedUrlStage for how it
+        // differs from 'hmac' (signed LINK for a person vs signed REQUEST from a machine).
+        $http->filter('signed',   SignedUrlStage::class);
     }
 }
